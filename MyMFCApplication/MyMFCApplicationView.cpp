@@ -75,8 +75,7 @@ void CMyMFCApplicationView::OnDraw(CDC* pDC/*pDC*/)
 
 	if (flag == TRUE) {
 		Repaint(pDC,rect);
-		Bezier3 = FALSE;
-		Bezier_n = FALSE;
+
 	}
 	DrawObject(pDC);
 }
@@ -163,9 +162,12 @@ void CMyMFCApplicationView::ShowText(CDC* pDC, CPoint p){   //打印字符
 
 void CMyMFCApplicationView::ShowPoints(CDC* pDC, CRect rect) {   //打印字符
 	CString data;
+	CString data2;
+	data.Format(_T("收集到 %d 个点"), PointsNum);
+	pDC->TextOut(-rect.right / 2, rect.bottom / 2, data);
 	for (int i = 0; i < PointsNum; i++) {
-		data.Format(_T("P%d(x=%d,y=%d)"), i, GetPoints[i].x, GetPoints[i].y);
-		pDC->TextOut(-rect.right / 2, rect.bottom / 2 - 20 * (i + 1), data);
+		data2.Format(_T("P%d(x=%d,y=%d)"), i, GetPoints[i].x, GetPoints[i].y);
+		pDC->TextOut(-rect.right / 2, rect.bottom / 2 - 20 * (i + 1), data2);
 	}
 }
 
@@ -334,7 +336,7 @@ double powi(double v, int k) //v的K次方
 
 void CMyMFCApplicationView::BezierN(CDC* pDC, CPoint* m_BezierN, int m_numBezierN)//绘制m_numBezierN阶贝塞尔曲线
 {
-	CPen Newpen1(PS_SOLID, 1, RGB(0, 0, 0));
+	CPen Newpen1(PS_SOLID, 2, RGB(0, 0, 0));
 	CPen* pOldPen1 = pDC->SelectObject(&Newpen1);
 
 	int x, y, i, j, k = 50, a, b;
@@ -363,6 +365,7 @@ void CMyMFCApplicationView::BezierN(CDC* pDC, CPoint* m_BezierN, int m_numBezier
 		a = x;
 		b = y;
 	}
+	pDC->LineTo(m_BezierN[m_numBezierN].x, m_BezierN[m_numBezierN].y);
 	pDC->SelectObject(pOldPen1);
 }
 
@@ -378,6 +381,9 @@ void CMyMFCApplicationView::OnDrawThreeBezier()
 	pDC->SetViewportExt(rect.Width(), -rect.Height());//设置视区:x轴水平向右，y轴垂直向上
 	pDC->SetViewportOrg(rect.Width() / 2, rect.Height() / 2);//客户区中心为坐标系原点
 
+	CPen Newpen1(PS_SOLID, 2, RGB(0, 0, 0));
+	CPen* pOldPen1 = pDC->SelectObject(&Newpen1);
+
 	if (PointsNum < 4) return; //点数小于4个不能画出贝塞尔曲线
 
 	int n = PointsNum-1;
@@ -390,6 +396,8 @@ void CMyMFCApplicationView::OnDrawThreeBezier()
 
 void CMyMFCApplicationView::OnCleanCurve()
 {
+	Bezier3 = FALSE;
+	Bezier_n = FALSE;
 	RedrawWindow();
 	CRect rect;
 	CDC* pDC = GetDC();
