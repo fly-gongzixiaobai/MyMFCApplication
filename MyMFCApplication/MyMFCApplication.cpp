@@ -170,6 +170,8 @@ protected:
 	DECLARE_MESSAGE_MAP()
 public:
 	afx_msg void OnCleanLine();
+	afx_msg void OnBnClickedOk();
+	afx_msg void OnBnClickedOk2();
 };
 
 CAboutDlg::CAboutDlg() noexcept : CDialogEx(IDD_ABOUTBOX)
@@ -183,6 +185,8 @@ void CAboutDlg::DoDataExchange(CDataExchange* pDX)
 
 BEGIN_MESSAGE_MAP(CAboutDlg, CDialogEx)
 
+	ON_BN_CLICKED(IDOK, &CAboutDlg::OnBnClickedOk)
+	ON_BN_CLICKED(IDOK2, &CAboutDlg::OnBnClickedOk2)
 END_MESSAGE_MAP()
 
 // 用于运行对话框的应用程序命令
@@ -216,3 +220,16 @@ void CMyMFCApplicationApp::SaveCustomState()
 
 // CMyMFCApplicationApp 消息处理程序
 
+
+
+void CAboutDlg::OnBnClickedOk()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	CDialogEx::OnOK();
+}
+
+
+void CAboutDlg::OnBnClickedOk2()
+{
+	// TODO: 在此添加控件通知处理程序代码
+}

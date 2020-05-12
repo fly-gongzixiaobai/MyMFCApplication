@@ -21,6 +21,8 @@ public:
 	CPoint GetPoints[100];
 	int PointsNum = 0;
 	BOOL flag = FALSE;//检查窗口大小是否改变
+
+	//记录执行的操作
 	BOOL Bezier3 = FALSE;
 	BOOL Bezier_n = FALSE;
 
@@ -55,6 +57,7 @@ protected:
 protected:
 	afx_msg
 	void ShowText(CDC* pDC, CPoint p);
+	void ShowText(CDC* pDC, CPoint p, int num);
 	void ShowPoints(CDC* pDC, CRect rect);
 	void OnFilePrintPreview();
 	afx_msg void OnRButtonUp(UINT nFlags, CPoint point);

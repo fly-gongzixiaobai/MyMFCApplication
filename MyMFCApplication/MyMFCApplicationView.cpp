@@ -160,6 +160,12 @@ void CMyMFCApplicationView::ShowText(CDC* pDC, CPoint p){   //打印字符
 	pDC->TextOut(p.x, p.y, data);
 }
 
+void CMyMFCApplicationView::ShowText(CDC* pDC, CPoint p, int num) {   //打印字符
+	CString data;
+	data.Format(_T("P%d(x=%d,y=%d)"), num, p.x, p.y);
+	pDC->TextOut(p.x, p.y, data);
+}
+
 void CMyMFCApplicationView::ShowPoints(CDC* pDC, CRect rect) {   //打印字符
 	CString data;
 	CString data2;
@@ -410,11 +416,11 @@ void CMyMFCApplicationView::OnCleanCurve()
 	if (PointsNum == 0) return;
 	//处理第一个点
 	pDC->MoveTo(GetPoints[0]);
-	ShowText(pDC, GetPoints[0]);
+	ShowText(pDC, GetPoints[0], 1);
 	DrawEllipse(pDC, GetPoints[0], PointR);
 	//处理剩余点
 	for (int i = 1; i < PointsNum; i++) {
-		ShowText(pDC, GetPoints[i]);
+		ShowText(pDC, GetPoints[i], i+1);
 		DrawEllipse(pDC, GetPoints[i], PointR);
 		pDC->LineTo(GetPoints[i]);
 	}
