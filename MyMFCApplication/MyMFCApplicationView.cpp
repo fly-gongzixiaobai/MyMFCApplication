@@ -241,8 +241,7 @@ void CMyMFCApplicationView::OnLButtonDown(UINT, CPoint point)			//鼠标左键�
 void CMyMFCApplicationView::OnSize(UINT, int, int)
 {
 	flag = TRUE;
-	Bezier3 = TRUE;
-	Bezier_n = TRUE;
+
 	Invalidate();  //更新
 
 }
@@ -303,6 +302,7 @@ void CMyMFCApplicationView::OnDrawNBezier()
 	BezierN(pDC, GetPoints, PointsNum-1);
 	//Repaint(pDC, rect);
 	Bezier = PointsNum;
+	Bezier_n = TRUE;
 	// TODO: 在此添加命令处理程序代码
 
 }
@@ -384,6 +384,7 @@ void CMyMFCApplicationView::OnDrawThreeBezier()
 	n = (n / 3) * 3 + 1;		//找出适合的点数参数
 	Bezier = 3;
 	pDC->PolyBezier(GetPoints, n);
+	Bezier3 = TRUE;
 }
 
 
