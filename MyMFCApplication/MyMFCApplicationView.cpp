@@ -25,6 +25,7 @@ IMPLEMENT_DYNCREATE(CMyMFCApplicationView, CView)
 BEGIN_MESSAGE_MAP(CMyMFCApplicationView, CView)
 	// 标准打印命令
 	ON_WM_LBUTTONDOWN() //鼠标点击
+	ON_WM_SIZE() //窗口大小变化
 	ON_COMMAND(ID_FILE_PRINT, &CView::OnFilePrint)
 	ON_COMMAND(ID_FILE_PRINT_DIRECT, &CView::OnFilePrint)
 	ON_COMMAND(ID_FILE_PRINT_PREVIEW, &CMyMFCApplicationView::OnFilePrintPreview)
@@ -66,13 +67,46 @@ void CMyMFCApplicationView::OnDraw(CDC* pDC/*pDC*/)
 		return;
 	ASSERT_VALID(pDoc);
 	// TODO: add draw code for native data here
-	CRect rect;
-	GetClientRect(&rect);
-	pDC->SetMapMode(MM_ANISOTROPIC);//设置映射模式
-	pDC->SetWindowExt(rect.Width(), rect.Height());//设置窗口
-	pDC->SetViewportExt(rect.Width(), -rect.Height());//设置视区:x轴水平向右，y轴垂直向上
-	pDC->SetViewportOrg(rect.Width() / 2, rect.Height() / 2);//客户区中心为坐标系原点
-	//绘制坐标轴
+	GetClientRect(&rect);//获得客户区的大小
+	pDC->SetMapMode(MM_ANISOTROPIC);//pDC自定义坐标系
+	pDC->SetWindowExt(rect.Width(), rect.Height());//设置窗口范围
+	pDC->SetViewportExt(rect.Width(), -rect.Height());//x轴水平向右，y轴垂直向上
+	pDC->SetViewportOrg(rect.Width() / 2, rect.Height() / 2);//屏幕中心为原点
+
+	if (flag == TRUE) {
+		Repaint(pDC,rect);
+		Bezier3 = FALSE;
+		Bezier_n = FALSE;
+	}
+	DrawObject(pDC);
+}
+
+void CMyMFCApplicationView::Repaint(CDC* pDC, CRect rect) {
+	if (PointsNum != 0) {
+		GetClientRect(&rect);
+		pDC->SetMapMode(MM_ANISOTROPIC);//设置映射模式
+		pDC->SetWindowExt(rect.Width(), rect.Height());//设置窗口
+		pDC->SetViewportExt(rect.Width(), -rect.Height());//设置视区:x轴水平向右，y轴垂直向上
+		pDC->SetViewportOrg(rect.Width() / 2, rect.Height() / 2);//客户区中心为坐标系原点
+
+		//处理第一个点
+		pDC->MoveTo(GetPoints[0]);
+		ShowText(pDC, GetPoints[0]);
+		DrawEllipse(pDC, GetPoints[0], PointR);
+		//处理剩余点
+		for (int i = 1; i < PointsNum; i++) {
+			ShowText(pDC, GetPoints[i]);
+			DrawEllipse(pDC, GetPoints[i], PointR);
+			pDC->LineTo(GetPoints[i]);
+		}
+
+		if (Bezier3) OnDrawThreeBezier();
+		if (Bezier_n) BezierN(pDC, GetPoints, PointsNum - 1);
+
+	}
+}
+void CMyMFCApplicationView::DrawObject(CDC* pDC)
+{
 	CPen NewPen, * pOldPen;
 	NewPen.CreatePen(PS_SOLID, 1, RGB(128, 128, 128));
 	pOldPen = pDC->SelectObject(&NewPen);
@@ -91,14 +125,48 @@ void CMyMFCApplicationView::OnDraw(CDC* pDC/*pDC*/)
 	pDC->LineTo(0, rect.bottom / 2);
 	pDC->TextOut(-30, rect.bottom / 2 - 20, (CString)"y");
 	pDC->TextOut(-20, -10, (CString)"O");
+	CString data;
+	data.Format(_T("收集到 %d 个点"), PointsNum);
+	pDC->TextOut(-rect.right / 2, rect.bottom / 2, data);
+	ShowPoints(pDC, rect);
 }
-
-
+void CMyMFCApplicationView::DoubleBuffer()//双缓冲
+{
+	CDC* pDC = GetDC();
+	GetClientRect(&rect);//获得客户区的大小
+	pDC->SetMapMode(MM_ANISOTROPIC);//pDC自定义坐标系
+	pDC->SetWindowExt(rect.Width(), rect.Height());//设置窗口范围
+	pDC->SetViewportExt(rect.Width(), -rect.Height());//x轴水平向右，y轴垂直向上
+	pDC->SetViewportOrg(rect.Width() / 2, rect.Height() / 2);//屏幕中心为原点
+	CDC MemDC;//内存DC
+	CBitmap NewBitmap, * pOldBitmap;//内存中承载图像的临时位图
+	MemDC.CreateCompatibleDC(pDC);//建立与屏幕pDC兼容的MemDC 
+	NewBitmap.CreateCompatibleBitmap(pDC, rect.Width(), rect.Height());//创建兼容位图 
+	pOldBitmap = MemDC.SelectObject(&NewBitmap); //将兼容位图选入MemDC 
+	MemDC.FillSolidRect(&rect, pDC->GetBkColor());//按原来背景填充客户区，否则是黑色
+	MemDC.SetMapMode(MM_ANISOTROPIC);//MemDC自定义坐标系
+	MemDC.SetWindowExt(rect.Width(), rect.Height());
+	MemDC.SetViewportExt(rect.Width(), -rect.Height());
+	MemDC.SetViewportOrg(rect.Width() / 2, rect.Height() / 2);
+	DrawObject(&MemDC);
+	pDC->BitBlt(-rect.Width() / 2, -rect.Height() / 2, rect.Width(), rect.Height(), &MemDC, -rect.Width() / 2, -rect.Height() / 2, SRCCOPY);//将内存位图拷贝到屏幕
+	MemDC.SelectObject(pOldBitmap);//恢复位图
+	NewBitmap.DeleteObject();//删除位图
+	ReleaseDC(pDC);//释放DC	
+}
 // CMyMFCApplicationView 打印
 void CMyMFCApplicationView::ShowText(CDC* pDC, CPoint p){   //打印字符
 	CString data;
-	data.Format(_T("x=%d,y=%d"), p.x, p.y);
+	data.Format(_T("P%d(x=%d,y=%d)"),PointsNum, p.x, p.y);
 	pDC->TextOut(p.x, p.y, data);
+}
+
+void CMyMFCApplicationView::ShowPoints(CDC* pDC, CRect rect) {   //打印字符
+	CString data;
+	for (int i = 0; i < PointsNum; i++) {
+		data.Format(_T("P%d(x=%d,y=%d)"), i, GetPoints[i].x, GetPoints[i].y);
+		pDC->TextOut(-rect.right / 2, rect.bottom / 2 - 20 * (i + 1), data);
+	}
 }
 
 void CMyMFCApplicationView::OnFilePrintPreview()
@@ -160,6 +228,7 @@ void CMyMFCApplicationView::OnLButtonDown(UINT, CPoint point)			//鼠标左键�
 
 
 	ShowText(pDC, point);
+	ShowPoints(pDC, rect);
 	DrawEllipse(pDC, point, PointR);
 
 	//CString data;
@@ -167,6 +236,15 @@ void CMyMFCApplicationView::OnLButtonDown(UINT, CPoint point)			//鼠标左键�
 	//pDC->TextOut(0, PointsNum*20, data);
 
 	ReleaseDC(pDC);
+}
+
+void CMyMFCApplicationView::OnSize(UINT, int, int)
+{
+	flag = TRUE;
+	Bezier3 = TRUE;
+	Bezier_n = TRUE;
+	Invalidate();  //更新
+
 }
 
 void CMyMFCApplicationView::DrawEllipse(CDC* pDC, CPoint p ,int r) {
@@ -220,9 +298,11 @@ void CMyMFCApplicationView::OnDrawNBezier()
 
 	//int n = PointsNum;
 	//n = (n / 3) * 3 + 1;
-
+	if (PointsNum == 0) return;
 	//pDC->PolyBezier(GetPoints, n);
 	BezierN(pDC, GetPoints, PointsNum-1);
+	//Repaint(pDC, rect);
+	Bezier = PointsNum;
 	// TODO: 在此添加命令处理程序代码
 
 }
@@ -300,9 +380,9 @@ void CMyMFCApplicationView::OnDrawThreeBezier()
 
 	if (PointsNum < 4) return; //点数小于4个不能画出贝塞尔曲线
 
-	int n = PointsNum;
+	int n = PointsNum-1;
 	n = (n / 3) * 3 + 1;		//找出适合的点数参数
-
+	Bezier = 3;
 	pDC->PolyBezier(GetPoints, n);
 }
 
@@ -318,6 +398,7 @@ void CMyMFCApplicationView::OnCleanCurve()
 	pDC->SetViewportExt(rect.Width(), -rect.Height());//设置视区:x轴水平向右，y轴垂直向上
 	pDC->SetViewportOrg(rect.Width() / 2, rect.Height() / 2);//客户区中心为坐标系原点
 
+	if (PointsNum == 0) return;
 	//处理第一个点
 	pDC->MoveTo(GetPoints[0]);
 	ShowText(pDC, GetPoints[0]);

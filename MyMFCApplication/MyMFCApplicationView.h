@@ -20,10 +20,21 @@ public:
 	int PointR = 5;
 	CPoint GetPoints[100];
 	int PointsNum = 0;
+	BOOL flag = FALSE;//检查窗口大小是否改变
+	BOOL Bezier3 = FALSE;
+	BOOL Bezier_n = FALSE;
+
+	int Bezier; //记录画贝塞尔曲线的阶数
+	CRect rect;//定义客户区
+
 
 // 重写
 public:
 	virtual void OnDraw(CDC* pDC);  // 重写以绘制该视图
+	void Repaint(CDC* pDC, CRect rect);
+	void DrawObject(CDC* pDC);
+
+	void DoubleBuffer();
 	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
 protected:
 	virtual BOOL OnPreparePrinting(CPrintInfo* pInfo);
@@ -44,10 +55,14 @@ protected:
 protected:
 	afx_msg
 	void ShowText(CDC* pDC, CPoint p);
+	void ShowPoints(CDC* pDC, CRect rect);
 	void OnFilePrintPreview();
 	afx_msg void OnRButtonUp(UINT nFlags, CPoint point);
 	afx_msg void OnContextMenu(CWnd* pWnd, CPoint point);
+
 	afx_msg void OnLButtonDown(UINT, CPoint);
+	afx_msg void OnSize(UINT, int, int);
+
 	void DrawEllipse(CDC* pDC, CPoint point, int r);
 	DECLARE_MESSAGE_MAP()
 public:

@@ -42,7 +42,7 @@ BOOL CMyMFCApplicationDoc::OnNewDocument()
 {
 	if (!CDocument::OnNewDocument())
 		return FALSE;
-
+	SetTitle(L"贝塞尔曲线画图");
 	// TODO: 在此添加重新初始化代码
 	// (SDI 文档将重用该文档)
 
