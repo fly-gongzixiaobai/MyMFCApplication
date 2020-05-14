@@ -156,7 +156,7 @@ void CMyMFCApplicationView::DoubleBuffer()//双缓冲
 // CMyMFCApplicationView 打印
 void CMyMFCApplicationView::ShowText(CDC* pDC, CPoint p){   //打印字符
 	CString data;
-	data.Format(_T("P%d(x=%d,y=%d)"),PointsNum, p.x, p.y);
+	data.Format(_T("P%d(x=%d,y=%d)"),PointsNum - 1, p.x, p.y);
 	pDC->TextOut(p.x, p.y, data);
 }
 
@@ -344,6 +344,36 @@ void CMyMFCApplicationView::BezierN(CDC* pDC, CPoint* m_BezierN, int m_numBezier
 {
 	CPen Newpen1(PS_SOLID, 2, RGB(0, 0, 0));
 	CPen* pOldPen1 = pDC->SelectObject(&Newpen1);
+
+	CString equation("曲线多项式为:p(t)=");
+	for (int i = 0; i < m_numBezierN + 1; i++) {
+		CString equation1("");
+		CString equation2("");
+		CString equation3("");
+		double a = fac(m_numBezierN) / (fac(i) * fac(m_numBezierN - i));
+		int b = m_numBezierN - i;
+		if (a <= 1.0) equation1.Format(_T(""));
+		if (a > 1.0) equation1.Format(_T("%g*"), a);
+
+		if (i == 0) equation2.Format(_T(""));
+		if (i == 1) equation2.Format(_T("t*"));
+		if (i > 1) equation2.Format(_T("t^%d*"), i);
+
+		if (b == 0) equation3.Format(_T("P%d"), i);
+		if (b == 1) equation3.Format(_T("(1-t)*P%d"), i);
+		if (b > 1) equation3.Format(_T("(1-t)^%d*P%d "), b, i);
+
+		if (i < m_numBezierN) {
+			CString t("+");
+			equation += equation1 + equation2 + equation3 + t;
+		}
+		else {
+			
+			equation += equation1 + equation2 + equation3;
+		}
+		
+	}
+	pDC->TextOut(-rect.right / 2 + 120, rect.bottom / 2, equation);
 
 	int x, y, i, j, k = 50, a, b;
 	double	t, t1, u, v;

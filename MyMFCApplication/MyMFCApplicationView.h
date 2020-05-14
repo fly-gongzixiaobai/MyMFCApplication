@@ -28,7 +28,7 @@ public:
 
 	int Bezier; //记录画贝塞尔曲线的阶数
 	CRect rect;//定义客户区
-
+	
 
 // 重写
 public:
